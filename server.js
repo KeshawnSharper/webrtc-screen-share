@@ -32,6 +32,10 @@ io.on("connection", socket => {
     socket.on("ice-candidate", incoming => {
         io.to(incoming.target).emit("ice-candidate", incoming.candidate);
     });
+    socket.on('message', (message,person ) => {
+        //send message to the same room
+        io.to(roomId).emit('createMessage', message,person)
+    }); 
 });
 
 

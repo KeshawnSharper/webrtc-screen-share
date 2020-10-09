@@ -1,6 +1,8 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect  , useState} from "react";
 import io from "socket.io-client";
-
+import "./room.css"
+import socketIOClient from "socket.io-client";
+const ENDPOINT = "http://localhost:8000/";
 const Room = (props) => {
     const userVideo = useRef();
     const partnerVideo = useRef();
@@ -9,8 +11,11 @@ const Room = (props) => {
     const otherUser = useRef();
     const userStream = useRef();
     const senders = useRef([]);
-
+    let socket = socketIOClient(ENDPOINT);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
     useEffect(() => {
+      socket = io(ENDPOINT);
         navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
             userVideo.current.srcObject = stream;
             userStream.current = stream;
@@ -35,6 +40,24 @@ const Room = (props) => {
         });
 
     }, []);
+    useEffect(() => {
+      socket.on('message', message => {
+        setMessages(messages => [ ...messages, message ]);
+      });
+      
+ 
+  }, []);
+  
+    const sendMessage = (event, message) => {
+      event.preventDefault();
+      console.log(message)
+      if(message) {
+        console.log(message)
+        socket.emit('sendMessage', message, () => {
+          console.log(message)
+          setMessage('')});
+      }
+    }
 
     function callUser(userID) {
         peerRef.current = createPeer(userID);
@@ -129,13 +152,81 @@ const Room = (props) => {
             }
         })
     }
+  //   function sendMessage(message) {
+     
+   
+  //   socket.on("createMessage", (message,person) => {
+  //    console.log(message)
+  //   })
+
+  // }
+  
 
     return (
+        // <div>
+            // <video controls style={{height: 500, width: 500}} autoPlay ref={userVideo} />
+            // <video controls style={{height: 500, width: 500}} autoPlay ref={partnerVideo} />
+        //     <button onClick={shareScreen}>Share screen</button>
+        // </div>
+        // <div>
+        // {/* Hello world */}
         <div>
-            <video controls style={{height: 500, width: 500}} autoPlay ref={userVideo} />
-            <video controls style={{height: 500, width: 500}} autoPlay ref={partnerVideo} />
-            <button onClick={shareScreen}>Share screen</button>
+        <div className="main">
+        <div className="main__left">
+          <div className="main__videos">
+            <div id="video-grid">
+                
+             <video controls  autoPlay ref={userVideo} />
+             <video controls  autoPlay ref={partnerVideo} />
+            </div>
+          </div>
+          <div className="main__controls">
+            <div className="main__controls__block">
+              <div onclick="muteUnmute()" className="main__controls__button main__mute_button">
+                <i className="fas fa-microphone" />
+                <span>Mute</span>
+              </div>
+              <div onclick="playStop()" className="main__controls__button main__video_button">
+                <i className="fas fa-video" />
+                <span>Stop Video</span>
+              </div>
+            </div>
+            <div className="main__controls__block">
+              <div className="main__controls__button">
+                <i className="fas fa-shield-alt" />
+                <span>Security</span>
+              </div>
+              <div onClick={shareScreen} className="main__controls__button main__share_button">
+                <i className="fas fa-user-friends" />
+                <span>Participants</span>
+              </div>
+              <div onClick={ e =>  sendMessage(e,'Chat')} className="main__controls__button">
+                <i className="fas fa-comment-alt" />
+                <span>Chat</span>
+              </div>
+            </div>
+            <div className="main__controls__block">
+              <div className="main__controls__button">
+                <span className="leave_meeting">Leave Meeting</span>
+              </div>
+            </div>
+          </div>
         </div>
+        <div className="main__right">
+          <div className="main__header" id="chat">
+            <h6>Chat</h6>
+            <b />
+          </div>
+          <div className="main__chat_window">
+            <ul className="messages">
+            </ul>
+          </div>
+          <div className="main__message_container">
+            <input id="chat_message" type="text" placeholder="Type message here..." />
+          </div>
+        </div>
+      </div>
+    </div>
     );
 };
 
